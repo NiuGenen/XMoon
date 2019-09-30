@@ -91,6 +91,38 @@ void print_window_info( XWindowAttributes *a )
     printf("--------------------\n");
 }
 
+Window win_get_parent(
+    Display *dp,
+    Window  win,
+    int     allow_inputonly )
+{
+    printf("Search Parent for window 0x%lx\n", win);
+
+    Window          root_win_ret;
+    Window          parent_win_ret;
+    Window          *child_win_list;
+    unsigned int    child_nr;
+
+    XWindowAttributes attrs;
+
+    do{
+        XQueryTree( dp, win,
+            &root_win_ret, &parent_win_ret,
+            &child_win_list, &child_nr);
+
+        printf("Parent Window = 0x%lx\n", UL(parent_win_ret) );
+
+        if( allow_inputonly )
+            goto _OUT_;
+
+        XGetWindowAttributes( dp, parent_win_ret, &attrs );
+    }while( attrs.class == InputOnly );
+
+_OUT_:
+    XFree( child_win_list );
+    return parent_win_ret;
+}
+
 void win_mul_2( Display *dp, Window win )
 {
     XWindowChanges xwc;
@@ -100,8 +132,8 @@ void win_mul_2( Display *dp, Window win )
 
     xwc.x = attrs.x;
     xwc.y = attrs.y;
-    xwc.width  = attrs.width  / 2;
-    xwc.height = attrs.height / 2;
+    xwc.width  = attrs.width  * 2;
+    xwc.height = attrs.height * 2;
     xwc.width  = GZERO(xwc.width );
     xwc.height = GZERO(xwc.height);
 
@@ -116,10 +148,15 @@ void win_div_2( Display *dp, Window win )
 
     XGetWindowAttributes( dp, win, &attrs );
 
+    if( attrs.class == InputOnly ){
+        win = win_get_parent( dp, win, 0 );
+        XGetWindowAttributes( dp, win, &attrs );
+    }
+
     xwc.x = attrs.x;
     xwc.y = attrs.y;
-    xwc.width  = GZERO(attrs.width ) * 2;
-    xwc.height = GZERO(attrs.height) * 2;
+    xwc.width  = GZERO(attrs.width  / 2);
+    xwc.height = GZERO(attrs.height / 2);
 
     XConfigureWindow( dp, win,
           CWWidth | CWHeight, &xwc );
@@ -183,6 +220,8 @@ int main()
     XWindowAttributes attrs;
 
     unsigned int i = 0;
+
+    Window saved_win;
     
     dp = xm_open_display_no_fail();
     print_display_info( dp );
@@ -222,9 +261,14 @@ int main()
     XGetWindowAttributes( dp, parent_win_ret, &attrs );
     print_window_info( &attrs );
 
+    saved_win = curr_win;
     while (1){
         XGetInputFocus( dp, &curr_win, &revert);
         printf("input focus = 0x%lx\n", UL(curr_win));
+        if( saved_win != curr_win ){
+            saved_win = curr_win;
+            win_div_2( dp, curr_win );
+        }
         sleep(1);
     }
 
