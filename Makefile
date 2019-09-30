@@ -1,0 +1,16 @@
+
+cc = gcc
+CFLAGS= -lX11
+
+DEMO_TARGET=demo
+DEMO_SOURCE=demo.c
+
+TARGET_ALL=${DEMO_TARGET}
+
+all:${TARGET_ALL}
+
+${DEMO_TARGET}: ${DEMO_SOURCE}
+	cc -o ${DEMO_TARGET} ${DEMO_SOURCE} ${CFLAGS}
+
+clean:
+	rm -rf ${DEMO_TARGET}

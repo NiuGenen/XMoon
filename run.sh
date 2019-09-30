@@ -1,6 +1,5 @@
 #!/bin/bash
 
-clear 
-gcc -o demo demo.c -lX11
-
+make clean
+make
 ./demo
