@@ -5,6 +5,8 @@
 #define MIN(x,y) ((x)<(y)?(x):(y))
 #define MAX(x,y) ((x)>(y)?(x):(y))
 
+#define GZERO(x) ((x)==0?1:(x))
+
 #define UL(x) ((unsigned long)(x))
 
 inline Display *xm_open_display()
@@ -86,6 +88,51 @@ void print_window_info( XWindowAttributes *a )
     printf("--------------------\n");
 }
 
+void win_mul_2( Display *dp, Window win )
+{
+    XWindowChanges xwc;
+    XWindowAttributes attrs;
+
+    XGetWindowAttributes( dp, win, &attrs );
+
+    xwc.x = attrs.x;
+    xwc.y = attrs.y;
+    xwc.width  = attrs.width  / 2;
+    xwc.height = attrs.height / 2;
+    xwc.width  = GZERO(xwc.width );
+    xwc.height = GZERO(xwc.height);
+
+    XConfigureWindow( dp, win,
+          CWWidth | CWHeight, &xwc );
+}
+
+void win_div_2( Display *dp, Window win )
+{
+    XWindowChanges xwc;
+    XWindowAttributes attrs;
+
+    XGetWindowAttributes( dp, win, &attrs );
+
+    xwc.x = attrs.x;
+    xwc.y = attrs.y;
+    xwc.width  = GZERO(attrs.width ) * 2;
+    xwc.height = GZERO(attrs.height) * 2;
+
+    XConfigureWindow( dp, win,
+          CWWidth | CWHeight, &xwc );
+}
+
+Bool simple_predicate(
+       Display *dp,
+       XEvent *event,
+       XPointer arg  )
+{
+    if( event->type == KeyPress   ||
+        event->type == KeyRelease )
+        return 1;
+    return 0;
+}
+
 int main()
 {
     Display *dp;
@@ -143,14 +190,20 @@ int main()
     XGetWindowAttributes( dp, parent_win_ret, &attrs );
     print_window_info( &attrs );
 
-    XWindowChanges xwc;
-    xwc.x = attrs.x;
-    xwc.y = attrs.y;
-    xwc.width  = attrs.width  / 2 + 1;
-    xwc.height = attrs.height / 2 + 1;
+    // set event mask for key press/release event
+    XSetWindowAttributes xwa;
+    xwa.event_mask = KeyPressMask | KeyReleaseMask;
+    XChangeWindowAttributes( dp, curr_win, 
+          CWEventMask, &xwa);
 
-    XConfigureWindow( dp, parent_win_ret,
-          CWWidth | CWHeight, &xwc );
+    XEvent e;
+    while(1) {
+        XIfEvent(dp, &e, simple_predicate, 0);
+        if( e.type == KeyPress ){
+            XKeyEvent *ee = (XKeyEvent*)(&e);
+            printf("key code = %ld\n", ee->keycode);
+        }
+    }
 
     XFree( child_win_list );
     XCloseDisplay( dp );
