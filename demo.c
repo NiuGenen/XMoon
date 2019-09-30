@@ -7,6 +7,9 @@
 
 #define GZERO(x) ((x)==0?1:(x))
 
+#define EVENT_ADD_MASK(e,m) (e=(e)|(m))
+#define EVENT_CLEAR_MASK(e) (e=0)
+
 #define UL(x) ((unsigned long)(x))
 
 inline Display *xm_open_display()
@@ -128,9 +131,38 @@ Bool simple_predicate(
        XPointer arg  )
 {
     if( event->type == KeyPress   ||
-        event->type == KeyRelease )
+        event->type == KeyRelease ||
+        event->type == FocusOut   ||
+        event->type == FocusIn     )
         return 1;
     return 0;
+}
+
+void win_set_event_monitor(
+        Display *dp,
+        Window  win,
+        unsigned long mask )
+{
+    XSetWindowAttributes xwa;
+
+    EVENT_CLEAR_MASK(xwa.event_mask);
+
+    EVENT_ADD_MASK(xwa.event_mask, mask);
+
+    XChangeWindowAttributes( dp, win, 
+          CWEventMask, &xwa);
+}
+
+void win_clear_event_monitor(
+        Display *dp,
+        Window  win )
+{
+    XSetWindowAttributes xwa;
+
+    EVENT_CLEAR_MASK(xwa.event_mask);
+
+    XChangeWindowAttributes( dp, win, 
+          CWEventMask, &xwa);
 }
 
 int main()
@@ -191,17 +223,37 @@ int main()
     print_window_info( &attrs );
 
     // set event mask for key press/release event
-    XSetWindowAttributes xwa;
-    xwa.event_mask = KeyPressMask | KeyReleaseMask;
-    XChangeWindowAttributes( dp, curr_win, 
-          CWEventMask, &xwa);
+    win_set_event_monitor( dp, curr_win, 
+           KeyPressMask | KeyReleaseMask | FocusChangeMask );
 
     XEvent e;
+    XKeyEvent *ee = NULL;
     while(1) {
         XIfEvent(dp, &e, simple_predicate, 0);
-        if( e.type == KeyPress ){
-            XKeyEvent *ee = (XKeyEvent*)(&e);
-            printf("key code = %ld\n", ee->keycode);
+        printf("Event Type = %d\n", e.type);
+        switch( e.type ){
+        case KeyPress:
+            ee = (XKeyEvent*)(&e);
+            printf("Ket Press   = 0x%x\n", ee->keycode);
+                break;
+        case KeyRelease:
+            ee = (XKeyEvent*)(&e);
+            printf("Ket Release = 0x%x\n", ee->keycode);
+                break;
+        case FocusIn:
+            win_clear_event_monitor( dp, curr_win );
+            XGetInputFocus( dp, &curr_win, &revert);
+            printf("Focus Move  to   0x%lx\n", curr_win);
+            win_set_event_monitor( dp, curr_win, 
+                    KeyPressMask | KeyReleaseMask | FocusChangeMask );
+            break;
+        case FocusOut:
+            XGetInputFocus( dp, &curr_win, &revert);
+            printf("Focus Leave from 0x%lx\n", curr_win);
+            break;
+        default:
+            printf("Unsupport Event Type : %d\n", e.type);
+            break;
         }
     }
 
