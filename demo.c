@@ -222,6 +222,14 @@ int main()
     XGetWindowAttributes( dp, parent_win_ret, &attrs );
     print_window_info( &attrs );
 
+    while (1){
+        XGetInputFocus( dp, &curr_win, &revert);
+        printf("input focus = 0x%lx\n", UL(curr_win));
+        sleep(1);
+    }
+
+    exit(0);
+
     // set event mask for key press/release event
     win_set_event_monitor( dp, curr_win, 
            KeyPressMask | KeyReleaseMask | FocusChangeMask );
