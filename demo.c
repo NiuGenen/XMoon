@@ -1,127 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <X11/Xlib.h>
-
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#define MAX(x,y) ((x)>(y)?(x):(y))
-
-#define GZERO(x) ((x)==0?1:(x))
-
-#define EVENT_ADD_MASK(e,m) (e=(e)|(m))
-#define EVENT_CLEAR_MASK(e) (e=0)
-
-#define UL(x) ((unsigned long)(x))
-
-inline Display *xm_open_display()
-{
-    return XOpenDisplay(":0");
-}
-
-inline Display *xm_open_display_no_fail()
-{
-    Display *d = xm_open_display();
-    if( d == NULL ){
-        fprintf(stderr, "[xm] fail to open display\n");
-        exit(-1);
-    }
-    return d;
-}
-
-inline Screen *xm_get_screen_of_display( Display *d, int idx )
-{
-    return XScreenOfDisplay( d, idx );
-}
-
-void print_display_info( Display *d )
-{
-    printf("------ display info ------\n");
-
-    /*Display *_d = d;*/
-
-    /*printf("------ screen info ------\n");*/
-    
-    /*printf("vendor      = %s\n" , _d->vendor       );*/
-    /*printf("qlen        = %d\n" , _d->qlen         );*/
-    /*printf("name        = %s\n" , _d->display_name );*/
-    /*printf("nscreens    = %d\n" , _d->nscreens     );*/
-    /*printf("request     = %ld\n", _d->request      );*/
-    /*printf("last_req_rd = %ld\n", _d->request      );*/
-    /*printf("min_key     = %d\n" , _d->min_keycode  );*/
-    /*printf("max_key     = %d\n" , _d->max_keycode  );*/
-
-    printf("--------------------------\n");
-}
-
-void print_screen_info( Screen *sc )
-{
-    int i = 0;
-
-    printf("------ screen info ------\n");
-
-    printf("width     = %d\n", sc->width   );
-    printf("height    = %d\n", sc->height  );
-    printf("mwidth    = %d\n", sc->mwidth  );
-    printf("mheight   = %d\n", sc->mheight );
-    printf("ndepths   = %d\n", sc->ndepths );
-
-    for( i=0; i<sc->ndepths; ++i )
-        printf("depth[%2d] = %2d, nvisuals = %2d\n",
-                i, sc->depths[i].depth, sc->depths[i].nvisuals);
-
-    printf("w_pixel   = %ld\n", sc->white_pixel );
-    printf("b_pixel   = %ld\n", sc->black_pixel );
-    printf("max_maps  = %d\n" , sc->max_maps    );
-    printf("min_maps  = %d\n" , sc->min_maps    );
-
-    printf("-------------------------\n");
-}
-
-void print_window_info( XWindowAttributes *a )
-{
-    printf("------ window ------\n");
-
-    printf("x      = %d\n"   ,  a->x        );
-    printf("y      = %d\n"   ,  a->y        );
-    printf("width  = %d\n"   ,  a->width    );
-    printf("height = %d\n"   ,  a->height   );
-    printf("depth  = %d\n"   ,  a->depth    );
-    printf("root   = 0x%lx\n",  UL(a->root) );
-    printf("class  = %d\n"   ,  a->class    );
-
-    printf("--------------------\n");
-}
-
-Window win_get_parent(
-    Display *dp,
-    Window  win,
-    int     allow_inputonly )
-{
-    printf("Search Parent for window 0x%lx\n", win);
-
-    Window          root_win_ret;
-    Window          parent_win_ret;
-    Window          *child_win_list;
-    unsigned int    child_nr;
-
-    XWindowAttributes attrs;
-
-    do{
-        XQueryTree( dp, win,
-            &root_win_ret, &parent_win_ret,
-            &child_win_list, &child_nr);
-
-        printf("Parent Window = 0x%lx\n", UL(parent_win_ret) );
-
-        if( allow_inputonly )
-            goto _OUT_;
-
-        XGetWindowAttributes( dp, parent_win_ret, &attrs );
-    }while( attrs.class == InputOnly );
-
-_OUT_:
-    XFree( child_win_list );
-    return parent_win_ret;
-}
+#include "xm.h"
+#include "xm-print.h"
+#include "xm-event.h"
 
 void win_mul_2( Display *dp, Window win )
 {
@@ -175,33 +54,6 @@ Bool simple_predicate(
     return 0;
 }
 
-void win_set_event_monitor(
-        Display *dp,
-        Window  win,
-        unsigned long mask )
-{
-    XSetWindowAttributes xwa;
-
-    EVENT_CLEAR_MASK(xwa.event_mask);
-
-    EVENT_ADD_MASK(xwa.event_mask, mask);
-
-    XChangeWindowAttributes( dp, win, 
-          CWEventMask, &xwa);
-}
-
-void win_clear_event_monitor(
-        Display *dp,
-        Window  win )
-{
-    XSetWindowAttributes xwa;
-
-    EVENT_CLEAR_MASK(xwa.event_mask);
-
-    XChangeWindowAttributes( dp, win, 
-          CWEventMask, &xwa);
-}
-
 int main()
 {
     Display *dp;
@@ -223,7 +75,7 @@ int main()
 
     Window saved_win;
     
-    dp = xm_open_display_no_fail();
+    dp = xm_open_display_default_no_fail();
     print_display_info( dp );
 
     sc = xm_get_screen_of_display( dp, 0 );

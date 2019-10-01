@@ -3,7 +3,7 @@ cc = gcc
 CFLAGS= -lX11
 
 DEMO_TARGET=demo
-DEMO_SOURCE=demo.c
+DEMO_SOURCE=xm.h xm-print.h xm-event.h demo.c xm-event.c xm-print.c xm.c
 
 TARGET_ALL=${DEMO_TARGET}
 
