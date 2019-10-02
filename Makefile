@@ -11,7 +11,10 @@ DEMO_DIV_SOURCE=xm.h demo_div.c xm.c
 DEMO_MUL=demo_mul
 DEMO_MUL_SOURCE=xm.h demo_mul.c xm.c
 
-TARGET_ALL=${DEMO_TARGET} ${DEMO_DIV} ${DEMO_MUL}
+DEMO_CENTER=demo_center
+DEMO_CENTER_SOURCE=xm.h demo_center.c xm.c
+
+TARGET_ALL=${DEMO_TARGET} ${DEMO_DIV} ${DEMO_MUL} ${DEMO_CENTER}
 
 all:${TARGET_ALL}
 
@@ -23,6 +26,9 @@ ${DEMO_DIV}: ${DEMO_DIV_SOURCE}
 
 ${DEMO_MUL}: ${DEMO_MUL_SOURCE}
 	cc -o ${DEMO_MUL} ${DEMO_MUL_SOURCE} ${CFLAGS}
-	
+
+${DEMO_CENTER}: ${DEMO_CENTER_SOURCE}
+	cc -o ${DEMO_CENTER} ${DEMO_CENTER_SOURCE} ${CFLAGS}
+
 clean:
 	rm -rf ${TARGET_ALL}
