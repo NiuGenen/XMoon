@@ -8,6 +8,7 @@ make
 
 # step 2
 sudo cp demo_div /usr/bin
+sudo cp demo_mul /usr/bin
 
 # step 3
 # set the shotcut to run demo_div
