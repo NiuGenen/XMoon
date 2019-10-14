@@ -1,34 +1,40 @@
 
 cc = gcc
-CFLAGS= -lX11
 
-DEMO_TARGET=demo
-DEMO_SOURCE=xm.h xm-print.h xm-event.h demo.c xm-event.c xm-print.c xm.c
+CFLAGS = -lX11 -g
+INCLUDE= -I.
 
-DEMO_DIV=demo_div
-DEMO_DIV_SOURCE=xm.h demo_div.c xm.c
+common-obj = xm.o xm-event.o xm-print.o 
 
-DEMO_MUL=demo_mul
-DEMO_MUL_SOURCE=xm.h demo_mul.c xm.c
+demo-obj =  demo.o
+demo-obj += demo_div.o
+demo-obj += demo_mul.o
+demo-obj += demo_center.o
 
-DEMO_CENTER=demo_center
-DEMO_CENTER_SOURCE=xm.h demo_center.c xm.c
+winmov-obj = xm-winmov.o
 
-TARGET_ALL=${DEMO_TARGET} ${DEMO_DIV} ${DEMO_MUL} ${DEMO_CENTER}
+obj-all  = ${common-obj}
+obj-all += ${demo-obj}
 
-all:${TARGET_ALL}
+quiet-command = $(if $(V),$1,$(if $(2),@echo $2 && $1, @$1))
 
-${DEMO_TARGET}: ${DEMO_SOURCE}
-	cc -o ${DEMO_TARGET} ${DEMO_SOURCE} ${CFLAGS}
+.PHONY: all demo winmov
 
-${DEMO_DIV}: ${DEMO_DIV_SOURCE}
-	cc -o ${DEMO_DIV} ${DEMO_DIV_SOURCE} ${CFLAGS}
+all:${obj-all} demo winmov
 
-${DEMO_MUL}: ${DEMO_MUL_SOURCE}
-	cc -o ${DEMO_MUL} ${DEMO_MUL_SOURCE} ${CFLAGS}
+%.o:%.c
+	$(call quiet-command, ${cc} ${CFLAGS} ${INCLUDE} -c -o $@ $<, "  CC    $@")
 
-${DEMO_CENTER}: ${DEMO_CENTER_SOURCE}
-	cc -o ${DEMO_CENTER} ${DEMO_CENTER_SOURCE} ${CFLAGS}
+demo:
+	$(call quiet-command, ${cc} -o demo demo.o ${common-obj} ${CFLAGS}, "  LINK  $@")
+	$(call quiet-command, ${cc} -o demo_div demo_div.o ${common-obj} ${CFLAGS}, "  LINK  $@_div")
+	$(call quiet-command, ${cc} -o demo_mul demo_mul.o ${common-obj} ${CFLAGS}, "  LINK  $@_mul")
+	$(call quiet-command, ${cc} -o demo_center demo_center.o ${common-obj} ${CFLAGS}, "  LINK  $@_center")
+
+winmov:
+	$(call quiet-command, ${cc} -o winmov xm-winmov.o ${common-obj} ${CFLAGS}, "  LINK  winmov")
 
 clean:
-	rm -rf ${TARGET_ALL}
+	rm -rf ${obj-all}
+	rm -rf demo demo_div demo_mul demo_center
+	rm -rf winmov
