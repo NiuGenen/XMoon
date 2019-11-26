@@ -10,6 +10,8 @@ demo-obj =  demo.o
 demo-obj += demo_div.o
 demo-obj += demo_mul.o
 demo-obj += demo_center.o
+demo-obj += demo_left.o
+demo-obj += demo_right.o
 
 winmov-obj = xm-winmov.o
 
@@ -26,15 +28,17 @@ all:${obj-all} demo winmov
 	$(call quiet-command, ${cc} ${CFLAGS} ${INCLUDE} -c -o $@ $<, "  CC    $@")
 
 demo:
-	$(call quiet-command, ${cc} -o demo demo.o ${common-obj} ${CFLAGS}, "  LINK  $@")
-	$(call quiet-command, ${cc} -o demo_div demo_div.o ${common-obj} ${CFLAGS}, "  LINK  $@_div")
-	$(call quiet-command, ${cc} -o demo_mul demo_mul.o ${common-obj} ${CFLAGS}, "  LINK  $@_mul")
+	$(call quiet-command, ${cc} -o demo        demo.o        ${common-obj} ${CFLAGS}, "  LINK  $@")
+	$(call quiet-command, ${cc} -o demo_div    demo_div.o    ${common-obj} ${CFLAGS}, "  LINK  $@_div")
+	$(call quiet-command, ${cc} -o demo_mul    demo_mul.o    ${common-obj} ${CFLAGS}, "  LINK  $@_mul")
 	$(call quiet-command, ${cc} -o demo_center demo_center.o ${common-obj} ${CFLAGS}, "  LINK  $@_center")
+	$(call quiet-command, ${cc} -o demo_left   demo_right.o  ${common-obj} ${CFLAGS}, "  LINK  $@_left")
+	$(call quiet-command, ${cc} -o demo_right  demo_left.o   ${common-obj} ${CFLAGS}, "  LINK  $@_right")
 
 winmov:
 	$(call quiet-command, ${cc} -o winmov xm-winmov.o ${common-obj} ${CFLAGS}, "  LINK  winmov")
 
 clean:
 	rm -rf ${obj-all}
-	rm -rf demo demo_div demo_mul demo_center
+	rm -rf demo demo_div demo_mul demo_center demo_left demo_right
 	rm -rf winmov
